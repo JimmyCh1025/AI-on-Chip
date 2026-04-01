@@ -1,0 +1,109 @@
+name: Autograding Tests
+
+on:
+  push:
+    branches: ['*']
+  workflow_dispatch:
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ai-on-chip-at-ncku-ee/aoc-docker-env:v1
+      options: --user root
+
+    if: github.actor != 'github-classroom[bot]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Preparation
+        run: |
+          if [ ! -d "src" ]; then
+            echo "Error: src directory not found!"
+            exit 1
+          fi
+
+      - name: Analyzer GLB Usage
+        id: analyzer_glb_usage
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Analyzer GLB Usage
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_analytical_model.TestAnalyticalModel.test_glb_usage_per_pass -v"
+          timeout: 2
+          max-score: 5
+
+      - name: Analyzer DRAM Access
+        id: analyzer_dram_access
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Analyzer DRAM Access
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_analytical_model.TestAnalyticalModel.test_dram_access_per_layer -v"
+          timeout: 2
+          max-score: 7
+
+      - name: Analyzer GLB Access
+        id: analyzer_glb_access
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Analyzer GLB Access
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_analytical_model.TestAnalyticalModel.test_glb_access_per_layer -v"
+          timeout: 2
+          max-score: 8
+
+      - name: DSE Has Mapping
+        id: dse_has_mapping
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: DSE Has Mapping
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_dse.TestDSE.test_generate_mappings_has_mapping -v"
+          timeout: 5
+          max-score: 5
+
+      - name: DSE Mapping Validity
+        id: dse_mapping_validity
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: DSE Mapping Validity
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_dse.TestDSE.test_generate_mappings_all_valid -v"
+          timeout: 5
+          max-score: 5
+
+      - name: Parser PyTorch
+        id: parser_pytorch
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Parser PyTorch
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_network_parser.TestNetworkParser.test_parse_pytorch -v"
+          timeout: 5
+          max-score: 10
+
+      - name: Parser ONNX
+        id: parser_onnx
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: Parser ONNX
+          command: "export PYTHONPATH=$PYTHONPATH:.:./src && python3 -m unittest test.test_network_parser.TestNetworkParser.test_parse_onnx -v"
+          timeout: 5
+          max-score: 10
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          ANALYZER_GLB_USAGE_RESULTS: "${{steps.analyzer_glb_usage.outputs.result}}"
+          ANALYZER_DRAM_ACCESS_RESULTS: "${{steps.analyzer_dram_access.outputs.result}}"
+          ANALYZER_GLB_ACCESS_RESULTS: "${{steps.analyzer_glb_access.outputs.result}}"
+          DSE_HAS_MAPPING_RESULTS: "${{steps.dse_has_mapping.outputs.result}}"
+          DSE_MAPPING_VALIDITY_RESULTS: "${{steps.dse_mapping_validity.outputs.result}}"
+          PARSER_PYTORCH_RESULTS: "${{steps.parser_pytorch.outputs.result}}"
+          PARSER_ONNX_RESULTS: "${{steps.parser_onnx.outputs.result}}"
+        with:
+          runners: analyzer_glb_usage,analyzer_dram_access,analyzer_glb_access,dse_has_mapping,dse_mapping_validity,parser_pytorch,parser_onnx

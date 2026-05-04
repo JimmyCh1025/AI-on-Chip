@@ -50,8 +50,8 @@ module GIN_MulticastController #(
 
     // setting signal
     always_comb begin
-        valid_out = valid_in && (tag == id) && ready_in;
-        ready_out = ready_in;
+        valid_out = valid_in && (tag == id);
+        ready_out = ready_in && (tag == id);
     end
 
 endmodule

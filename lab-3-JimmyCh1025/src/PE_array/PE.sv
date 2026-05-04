@@ -165,7 +165,7 @@ module PE (
             S_LOAD_IFMAP : begin
                 // `define IFMAP_SPAD_LEN 12 => 4 bits
                 for (int i = 0 ; i < 4 ; ++i) 
-                    // ~ifmap[(i + 1) * `IFMAP_SIZE - 1] => + 128
+                    // ~ifmap[(i + 1) * `IFMAP_SIZE - 1] => [ ReLU(+128, range[0, 255]) => Ifmap(-128, range[-128, 127])]
                     ifmap_spad[counter[3:0] + i[3:0]] <= {~ifmap[(i + 1) * `IFMAP_SIZE - 1], ifmap[i * `IFMAP_SIZE +: `IFMAP_SIZE-1]};
             end
 

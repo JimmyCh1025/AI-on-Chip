@@ -63,6 +63,12 @@ module GON_Bus #(
 
    
     always_comb begin
+        slave_data = '0;
+        for (int i = 0; i < NUMS_MASTER; ++i) begin
+            if (master_valid_out[i]) begin
+                slave_data = master_data[i * `DATA_BITS +: `DATA_BITS];
+            end
+        end
         // if any slave ready, then master ready is true, else false
         slave_valid = |master_valid_out;
     end

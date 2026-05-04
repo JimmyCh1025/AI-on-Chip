@@ -52,7 +52,8 @@ module GON (
     
     logic [`NUMS_PE_ROW-1 : 0] X_Bus_valid;
     logic [`NUMS_PE_ROW-1 : 0] X_Bus_ready;
-
+    logic [`DATA_BITS-1:0] X_Bus_data [`NUMS_PE_ROW-1:0];
+    
     logic [`XID_BITS-1:0] MC_id [`NUMS_PE_ROW-1:0];
     logic [`XID_BITS-1:0] MC_id_out [`NUMS_PE_ROW-1:0];
 
@@ -85,11 +86,11 @@ module GON (
                 .rst         (rst),
                 .tag         (tag_X),
                 .master_valid(PE_valid[i * `NUMS_PE_COL +: `NUMS_PE_COL]),                            // input
-                .master_data (PE_data[(i * `NUMS_PE_COL * `DATA_BITS) +: `NUMS_PE_COL * `DATA_BITS]), // input                                          // input
+                .master_data (PE_data[(i * `NUMS_PE_COL * `DATA_BITS) +: `NUMS_PE_COL * `DATA_BITS]), // input                                
                 .master_ready(PE_ready[i * `NUMS_PE_COL +: `NUMS_PE_COL]),                            // output
                 .slave_ready (X_Bus_ready[i]),                                                        // input
                 .slave_valid (X_Bus_valid[i]),                                                        // output
-                .slave_data  (),                                                                      // output
+                .slave_data  (X_Bus_data[i]),                                                         // output
                 .set_id      (set_XID),
                 .ID_scan_in  (MC_id[i]),
                 .ID_scan_out (MC_id_out[i])
@@ -106,9 +107,9 @@ module GON (
 
     always_comb begin
         GON_data = '0;
-        for (int i = 0 ; i < `NUMS_PE_ROW * `NUMS_PE_COL ; ++i) begin
-            if (PE_ready[i]) begin
-                GON_data = PE_data[(i * `DATA_BITS) +: `DATA_BITS];
+        for (int i = 0 ; i < `NUMS_PE_ROW ; ++i) begin
+            if (X_Bus_valid[i] && GON_ready) begin
+                GON_data = X_Bus_data[i];
             end
         end
     end

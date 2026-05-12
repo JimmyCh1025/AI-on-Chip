@@ -188,7 +188,7 @@ void CpuHAL::tick_posedge() {
         l1d_miss_start_cycle_ = info_.elapsed_cycle;
     }
 
-    if (l1d_miss_issued && (l1d_miss_start_cycle_ != -1)) 
+    if (l1d_data_return && (l1d_miss_start_cycle_ != -1)) 
     {
         info_.l1d_miss_penalty_cycles += (info_.elapsed_cycle - l1d_miss_start_cycle_);
         l1d_miss_start_cycle_ = -1;
@@ -200,7 +200,7 @@ void CpuHAL::tick_posedge() {
         l2_miss_start_cycle_ = info_.elapsed_cycle;
     }
 
-    if (l2_miss_issued && (l2_miss_start_cycle_ != -1)) 
+    if (l2_data_return && (l2_miss_start_cycle_ != -1)) 
     {
         info_.l2_miss_penalty_cycles += (info_.elapsed_cycle - l2_miss_start_cycle_);
         l2_miss_start_cycle_ = -1;

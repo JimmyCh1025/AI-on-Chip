@@ -1,0 +1,12 @@
+.DS_Store
+data/
+log/
+obj/
+obj_dir/
+__pycache__
+main
+compile_commands.json
+massif_out/
+*.csv
+output*/*
+!output*/*.svg

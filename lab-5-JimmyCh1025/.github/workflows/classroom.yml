@@ -1,0 +1,61 @@
+name: Autograding Tests
+on:
+  - push
+  - workflow_dispatch
+  - repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: [self-hosted, Linux, X64]
+    container:
+      image: ghcr.io/ai-on-chip-at-ncku-ee/aoc2026-env:v1
+      options: --user root
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "Patch dlpack.h (TVM runtime header)"
+        run: |
+          mkdir -p /home/myuser/tvm/include/dlpack
+          wget -q https://raw.githubusercontent.com/dmlc/dlpack/v0.8/include/dlpack/dlpack.h \
+            -O /home/myuser/tvm/include/dlpack/dlpack.h
+
+      - name: "Build TVM model and dataset"
+        id: build-model
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "Build TVM model and dataset"
+          command: "PYTHONPATH=/home/myuser/tvm/python TVM_HOME=/home/myuser/tvm make build_model"
+          timeout: 5
+          max-score: 5
+
+      - name: "CPU smoke test"
+        id: cpu-smoke
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "CPU smoke test"
+          command: "PYTHONPATH=/home/myuser/tvm/python TVM_HOME=/home/myuser/tvm make test_cpu"
+          timeout: 3
+          max-score: 10
+
+      - name: "DLA smoke test"
+        id: dla-smoke
+        uses: classroom-resources/autograding-command-grader@v1
+        with:
+          test-name: "DLA smoke test"
+          command: "PYTHONPATH=/home/myuser/tvm/python TVM_HOME=/home/myuser/tvm make test_dla"
+          timeout: 5
+          max-score: 10
+
+      - name: Autograding Reporter
+        uses: classroom-resources/autograding-grading-reporter@v1
+        env:
+          BUILD-MODEL_RESULTS: "${{steps.build-model.outputs.result}}"
+          CPU-SMOKE_RESULTS: "${{steps.cpu-smoke.outputs.result}}"
+          DLA-SMOKE_RESULTS: "${{steps.dla-smoke.outputs.result}}"
+        with:
+          runners: build-model,cpu-smoke,dla-smoke
